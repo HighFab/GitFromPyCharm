@@ -1,1 +1,0 @@
-conda create -n MTU_UEBUNG -c anaconda -c conda-forge -c plotly "plotly" "pandas" "dash" "jupyter" "requests" "openpyxl"
