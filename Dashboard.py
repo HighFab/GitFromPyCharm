@@ -1,32 +1,46 @@
-# Import packages
-from dash import Dash, html, dash_table, dcc, callback, Output, Input
+from dash import Dash, html, dcc, Input, Output, State, callback, dash_table
+import plotly.graph_objects as go
 import pandas as pd
-import plotly.express as px
 
-# Incorporate data
-df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder2007.csv')
+from import_data import import_tempature
 
-# Initialize the app
+# Data import
+df = import_tempature.import_data()
+df_year = import_tempature.import_slicer()
+
+##### Initial the app #####
 app = Dash(__name__)
 
-# App layout
+###### App layout #####
 app.layout = html.Div([
-    html.Div(children='My First App with Data, Graph, and Controls'),
-    html.Hr(),
-    dcc.RadioItems(options=['pop', 'lifeExp', 'gdpPercap'], value='lifeExp', id='controls-and-radio-item'),
-    dash_table.DataTable(data=df.to_dict('records'), page_size=6),
-    dcc.Graph(figure={}, id='controls-and-graph')
+    html.H1(children='Temperaturdaten'),
+    dcc.Graph(id='output-TMK'),
+    dcc.RadioItems(df_year, '1988', id='input-year')
 ])
 
-# Add controls to build the interaction
+##### Callback #####
 @callback(
-    Output(component_id='controls-and-graph', component_property='figure'),
-    Input(component_id='controls-and-radio-item', component_property='value')
+    Output('output-TMK', 'figure'),
+    Input('input-year', 'value')
 )
-def update_graph(col_chosen):
-    fig = px.histogram(df, x='continent', y=col_chosen, histfunc='avg')
+def update_figure(input_year):
+    dff = df[df.Year == input_year]
+    layout = go.Layout(
+        title={'text': 'Temperaturdatenverlauf',
+               'x': 0.5,
+               'y': 0.85,
+               'xanchor': 'center'},
+        xaxis=dict(title="Datum"),
+        yaxis=dict(title="Durschnittliche Temperatur [°C]"),
+        template='plotly_dark'  # "plotly", "plotly_white", "plotly_dark", "ggplot2", "seaborn", "simple_white", "none"
+    )
+    fig = go.Figure(layout=layout)
+    fig.add_trace(
+        go.Scatter(x=dff['MESS_DATUM'], y=dff['TMK'])
+    )
     return fig
 
-# Run the app
+
+##### Run the app #####
 if __name__ == '__main__':
     app.run(debug=True)
